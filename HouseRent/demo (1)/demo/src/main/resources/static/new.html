@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Online Rent Management</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: url("https://images.unsplash.com/photo-1600585154340-be6161a56a0c")
+          no-repeat center center fixed;
+        background-size: cover;
+      }
+
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(6px);
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 1;
+        transition: opacity 0.5s ease;
+        opacity: 1;
+      }
+
+      .overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .login-container {
+        position: relative;
+        z-index: 2;
+        max-width: 400px;
+        width: 100%;
+        margin: 100px auto;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .main-content {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        z-index: 2;
+        position: relative;
+      }
+
+      .blurred-box {
+        position: relative;
+        max-width: 900px;
+        width: 100%;
+        margin: 20px auto;
+        padding: 30px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .blurred-box::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.4);
+        z-index: -1;
+      }
+
+      /* Keep this for dashboard */
+      .dashboard {
+        background: #eaeeeb7f;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 1000px;
+        width: 100%;
+        margin: 20px auto;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      .btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background: #0056b3;
+      }
+
+      .house-card {
+        background: #eef;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      .house-card:hover {
+        background: #dde;
+      }
+
+      .house-img {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 3px solid red;
+        background-color: #eee;
+        min-width: 200px;
+        min-height: 150px;
+      }
+
+      .details {
+        display: none;
+        margin-top: 10px;
+      }
+
+      /* Welcome Banner styles */
+      .welcome-banner {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        margin-top: 20px;
+        z-index: 2;
+        position: relative;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 200px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding-top: 60px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 3;
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .sidebar ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .sidebar ul li {
+        padding: 15px 20px;
+        cursor: pointer;
+        border-bottom: 1px solid #444;
+      }
+
+      .sidebar ul li:hover {
+        background-color: #222;
+      }
+
+      #sidebar ul li:nth-child(2) {
+        cursor: pointer;
+      }
+      #sidebar ul li:nth-child(2):hover {
+        background-color: #222;
+      }
+
+      .toggle-btn {
+        position: absolute;
+        top: 15px;
+        right: -45px;
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 4;
+        transition: background 0.3s ease;
+      }
+
+      .toggle-btn:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+      <button onclick="toggleSidebar()" class="toggle-btn">☰</button>
+      <ul>
+        <li onclick="showSection('dashboard')">Dashboard</li>
+        <li onclick="showSection('addClientForm')" id="addClientLink">
+          Add Client
+        </li>
+        <li onclick="showSection('addHouseForm')" id="addHouseLink">
+          Add House
+        </li>
+        <li onclick="showSection('addOwnerForm')" id="addOwnerLink">
+          Add Owner
+        </li>
+        <li
+          onclick="showSection('updateDeleteHouseForm')"
+          id="updateDeleteHouseLink"
+        >
+          Update/Delete House
+        </li>
+      </ul>
+    </div>
+
+    <!-- Welcome Banner -->
+    <div id="welcomeBanner" class="welcome-banner">
+      🏠 Welcome to House Rent Management
+    </div>
+
+    <div class="login-container" id="login">
+      <h2>Login</h2>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <label for="role">Select Role:</label>
+      <select id="role">
+        <option value="Client">Client</option>
+        <option value="Owner">Owner</option>
+      </select>
+      <button class="btn" onclick="login()">Enter Dashboard</button>
+    </div>
+
+    <div class="main-content" id="mainContent">
+      <!-- Add House Box -->
+      <div id="addHouseForm" class="blurred-box" style="display: none">
+        <h2>Add New House</h2>
+        <input type="text" id="houseTitle" placeholder="House Title" />
+        <input type="number" id="housePrice" placeholder="Price ($)" />
+        <input type="text" id="address" placeholder="Address" />
+        <input
+          type="text"
+          id="locationDescription"
+          placeholder="Location Description"
+        />
+        <input
+          type="text"
+          id="nearCity"
+          placeholder="Nearby City (true/false)"
+        />
+        <input
+          type="text"
+          id="nearbyAttractions"
+          placeholder="Nearby Attractions"
+        />
+        <input type="number" id="rooms" placeholder="Number of Rooms" />
+        <input type="number" id="ownerId" placeholder="Owner ID" />
+        <input type="text" id="imageUrl" placeholder="Image URL" />
+        <button class="btn" onclick="addHouse()">Add House</button>
+      </div>
+
+      <!-- Add Owner Box -->
+      <div id="addOwnerForm" class="blurred-box" style="display: none">
+        <h2>Add Owner</h2>
+        <input type="text" id="ownerName" placeholder="Owner Name" />
+        <input type="text" id="ownerPhone" placeholder="Phone Number" />
+        <input type="email" id="ownerEmail" placeholder="Email" />
+        <button class="btn" onclick="addOwner()">Add Owner</button>
+      </div>
+
+      <!-- Add Client Box -->
+      <div id="addClientForm" class="blurred-box" style="display: none">
+        <h2>Add Client</h2>
+        <input type="text" id="clientName" placeholder="Client Name" />
+        <input type="text" id="clientPhone" placeholder="Phone Number" />
+        <input type="email" id="clientEmail" placeholder="Email" />
+        <button class="btn" onclick="addClient()">Add Client</button>
+      </div>
+
+      <!-- Update/Delete House Box -->
+      <div id="updateDeleteHouseForm" class="blurred-box" style="display: none">
+        <h2>Update/Delete House</h2>
+        <input type="number" id="updateHouseId" placeholder="Enter House ID" />
+        <button class="btn" onclick="fetchHouseDetails()">Fetch Details</button>
+
+        <div id="houseDetailsForm" style="display: none; margin-top: 15px">
+          <input type="text" id="updateHouseTitle" placeholder="House Title" />
+          <input type="text" id="updateHouseAddress" placeholder="Address" />
+          <input type="number" id="updateRooms" placeholder="Number of Rooms" />
+          <input type="number" id="updateRent" placeholder="Rent" />
+          <input
+            type="text"
+            id="updateLocationDescription"
+            placeholder="Location Description"
+          />
+          <input
+            type="text"
+            id="updateNearbyAttractions"
+            placeholder="Nearby Attractions"
+          />
+          <label
+            ><input type="checkbox" id="updateParkingAvailable" /> Parking
+            Available</label
+          >
+          <label><input type="checkbox" id="updateNearCity" /> Near City</label>
+          <button class="btn" onclick="updateHouse()">Update House</button>
+          <button class="btn" onclick="deleteHouse()">Delete House</button>
+        </div>
+      </div>
+
+      <!-- Dashboard Section -->
+      <div id="dashboard" class="dashboard">
+        <h2>Dashboard</h2>
+        <div id="housesContainer"></div>
+      </div>
+
+      <!-- Sidebar Toggle -->
+      <script>
+        function toggleSidebar() {
+          document.getElementById("sidebar").classList.toggle("active");
+        }
+
+        // Handle login process
+        function login() {
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const role = document.getElementById("role").value;
+
+          if (!email || !password) {
+            alert("Please fill in all fields.");
+            return;
+          }
+
+          localStorage.setItem("role", role); // Save user role in local storage
+          showDashboard(role);
+        }
+
+        // Show relevant sections based on user role
+        function showDashboard(role) {
+          document.getElementById("login").style.display = "none";
+          document.getElementById("mainContent").style.display = "flex";
+          document.getElementById(
+            "welcomeBanner"
+          ).innerText = `🏠 Welcome, ${role}`;
+          toggleSidebar();
+
+          // Show options based on role
+          if (role === "Client") {
+            document.getElementById("addHouseLink").style.display = "none";
+            document.getElementById("addOwnerLink").style.display = "none";
+            document.getElementById("updateDeleteHouseLink").style.display =
+              "none";
+          } else if (role === "Owner") {
+            document.getElementById("addClientLink").style.display = "none";
+          }
+
+          // Fetch houses to display in dashboard
+          fetchHouses();
+        }
+
+        // Show specific section
+        function showSection(sectionId) {
+          const sections = [
+            "dashboard",
+            "addHouseForm",
+            "addOwnerForm",
+            "updateDeleteHouseForm",
+          ];
+          sections.forEach((section) => {
+            document.getElementById(section).style.display = "none";
+          });
+          document.getElementById(sectionId).style.display = "block";
+        }
+
+        // Add House Function
+        function addHouse() {
+          const house = {
+            title: document.getElementById("houseTitle").value.trim(),
+            rent: parseFloat(document.getElementById("housePrice").value),
+            address: document.getElementById("address").value.trim(),
+            locationDescription: document
+              .getElementById("locationDescription")
+              .value.trim(),
+            nearbyAttractions: document
+              .getElementById("nearbyAttractions")
+              .value.trim(),
+            rooms: parseInt(document.getElementById("rooms").value),
+            ownerId: parseInt(document.getElementById("ownerId").value),
+            nearCity:
+              document.getElementById("nearCity").value.toLowerCase() ===
+              "true",
+            imageUrl: document.getElementById("imageUrl").value.trim(),
+          };
+
+          // Correct validation: check for empty strings and NaN
+          if (
+            house.title === "" ||
+            isNaN(house.rent) ||
+            house.address === "" ||
+            house.locationDescription === "" ||
+            house.nearbyAttractions === "" ||
+            isNaN(house.rooms) ||
+            isNaN(house.ownerId)
+          ) {
+            alert("Please fill in all required fields correctly.");
+            return;
+          }
+
+          console.log("Sending house data:", house); // Useful for debugging
+
+          fetch("http://localhost:8080/api/houses", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(house),
+          })
+            .then((response) => {
+              if (!response.ok) throw new Error("Failed to add house");
+              return response.json();
+            })
+            .then((data) => {
+              alert("House added successfully!");
+              fetchHouses(); // Your existing function to refresh house list
+              document
+                .getElementById("addHouseForm")
+                .querySelectorAll("input")
+                .forEach((input) => (input.value = ""));
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error adding house.");
+            });
+        }
+
+        // Add Owner Function
+        function addOwner() {
+          const ownerName = document.getElementById("ownerName").value;
+          const ownerPhone = document.getElementById("ownerPhone").value;
+          const ownerEmail = document.getElementById("ownerEmail").value;
+
+          // Simple validation
+          if (!ownerName || !ownerPhone || !ownerEmail) {
+            alert("Please fill in all fields.");
+            return;
+          }
+
+          // Create owner object
+          const owner = {
+            name: ownerName,
+            phone: ownerPhone,
+            email: ownerEmail,
+          };
+
+          // Send POST request to add the owner
+          fetch("http://localhost:8080/api/owners", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(owner),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Owner added:", data);
+              alert("Owner added successfully!");
+              // Optionally, clear the form
+              document.getElementById("addOwnerForm").reset();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error adding owner.");
+            });
+        }
+
+        function addClient() {
+          const clientName = document.getElementById("clientName").value;
+          const clientPhone = document.getElementById("clientPhone").value;
+          const clientEmail = document.getElementById("clientEmail").value;
+
+          // Simple validation
+          if (!clientName || !clientPhone || !clientEmail) {
+            alert("Please fill in all fields.");
+            return;
+          }
+
+          // Create client object
+          const client = {
+            name: clientName,
+            phone: clientPhone,
+            email: clientEmail,
+          };
+
+          // Send POST request to add the client
+          fetch("http://localhost:8080/api/Clients", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(client),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Client added:", data);
+              alert("Client added successfully!");
+              // Optionally, clear the form
+              document.getElementById("addClientForm").reset();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error adding client.");
+            });
+        }
+
+        // Update House Function
+
+        function updateHouse() {
+          const houseId = document.getElementById("updateHouseId").value;
+          const houseTitle = document.getElementById("updateHouseTitle").value;
+          const houseAddress =
+            document.getElementById("updateHouseAddress").value;
+          const houseRooms = document.getElementById("updateRooms").value;
+          const houseRent = document.getElementById("updateRent").value;
+          const houseLocationDescription = document.getElementById(
+            "updateLocationDescription"
+          ).value;
+          const houseNearbyAttractions = document.getElementById(
+            "updateNearbyAttractions"
+          ).value;
+          const houseParkingAvailable = document.getElementById(
+            "updateParkingAvailable"
+          ).checked;
+          const houseNearCity =
+            document.getElementById("updateNearCity").checked;
+
+          if (
+            !houseId ||
+            !houseTitle ||
+            !houseAddress ||
+            !houseRooms ||
+            !houseRent ||
+            !houseLocationDescription ||
+            !houseNearbyAttractions
+          ) {
+            alert("Please fill in all fields.");
+            return;
+          }
+
+          const updatedHouse = {
+            id: parseInt(houseId),
+            title: houseTitle,
+            address: houseAddress,
+            rooms: parseInt(houseRooms),
+            rent: parseFloat(houseRent),
+            locationDescription: houseLocationDescription,
+            nearbyAttractions: houseNearbyAttractions,
+            parkingAvailable: houseParkingAvailable,
+            nearCity: houseNearCity,
+          };
+
+          fetch(`http://localhost:8080/api/houses/${houseId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedHouse),
+          })
+            .then((response) => {
+              if (!response.ok) throw new Error("Failed to update house");
+              return response.json();
+            })
+            .then((data) => {
+              alert("House updated successfully!");
+              document.getElementById("houseDetailsForm").style.display =
+                "none";
+              fetchHouses();
+            })
+            .catch((error) => {
+              console.error("Error updating house:", error);
+              alert("Error updating house.");
+            });
+        }
+
+        // Fetch Houses Function
+        function fetchHouses() {
+          fetch("http://localhost:8080/api/houses")
+            .then((response) => response.json())
+            .then((houses) => {
+              const container = document.getElementById("housesContainer");
+              container.innerHTML = ""; // Clear existing content
+              houses.forEach((house) => {
+                const houseCard = document.createElement("div");
+                houseCard.className = "house-card";
+                houseCard.innerHTML = `
+                  <img src="${
+                    house.imageUrl && house.imageUrl.trim() !== ""
+                      ? house.imageUrl
+                      : "https://via.placeholder.com/400x300?text=No+Image"
+                  }" alt="House Image" class="house-img" />
+                  <h3>${house.title || ""}</h3>
+                  <p><strong>Address:</strong> ${house.address || ""}</p>
+                  <p><strong>Rent:</strong> $${
+                    house.rent != null ? house.rent : ""
+                  }</p>
+                  <p><strong>Rooms:</strong> ${
+                    house.rooms != null ? house.rooms : ""
+                  }</p>
+                  <p><strong>Location Description:</strong> ${
+                    house.locationDescription || ""
+                  }</p>
+                  <p><strong>Nearby Attractions:</strong> ${
+                    house.nearbyAttractions || ""
+                  }</p>
+                  <p><strong>Near City:</strong> ${
+                    house.nearCity ? "Yes" : "No"
+                  }</p>
+                  <p><strong>Owner:</strong> ${
+                    house.owner && house.owner.name ? house.owner.name : "N/A"
+                  }</p>
+                  <p><strong>Phone Number:</strong> ${
+                    house.owner && house.owner.phone ? house.owner.phone : "N/A"
+                  }</p>
+                `;
+                container.appendChild(houseCard);
+              });
+            })
+            .catch((error) => {
+              console.error("Error fetching houses:", error);
+              alert("Error fetching houses.");
+            });
+        }
+
+        function deleteHouse() {
+          const houseId = document.getElementById("updateHouseId").value;
+
+          if (!houseId) {
+            alert("Please provide a House ID.");
+            return;
+          }
+
+          fetch("http://localhost:8080/api/houses/" + houseId, {
+            method: "DELETE",
+          })
+            .then(() => {
+              console.log("House deleted:", houseId);
+              alert("House deleted successfully!");
+              document.getElementById("houseDetailsForm").reset();
+              document.getElementById("houseDetailsForm").style.display =
+                "none";
+            })
+            .catch((error) => {
+              console.error("Error deleting house:", error);
+              alert("Error deleting house.");
+            });
+        }
+
+        function fetchHouseDetails() {
+          const houseId = document.getElementById("updateHouseId").value;
+          if (!houseId) {
+            alert("Please provide a House ID.");
+            return;
+          }
+          fetch("http://localhost:8080/api/houses/" + houseId)
+            .then((response) => response.json())
+            .then((house) => {
+              document.getElementById("updateHouseTitle").value = house.title;
+              document.getElementById("updateHouseAddress").value =
+                house.address;
+              document.getElementById("updateRooms").value = house.rooms;
+              document.getElementById("updateRent").value = house.rent;
+              document.getElementById("updateLocationDescription").value =
+                house.locationDescription;
+              document.getElementById("updateNearbyAttractions").value =
+                house.nearbyAttractions;
+              document.getElementById("updateParkingAvailable").checked =
+                house.parkingAvailable;
+              document.getElementById("updateNearCity").checked =
+                house.nearCity;
+
+              document.getElementById("houseDetailsForm").style.display =
+                "block";
+            })
+            .catch((error) => {
+              console.error("Error fetching house details:", error);
+              alert("Error fetching house details.");
+            });
+        }
+      </script>
+    </div>
+  </body>
+</html>

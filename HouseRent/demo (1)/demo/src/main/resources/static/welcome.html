@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome</title>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: url("https://images.unsplash.com/photo-1600585154340-be6161a56a0c")
+          no-repeat center center fixed;
+        background-size: cover;
+        font-family: Arial, sans-serif;
+      }
+
+      .welcome-box {
+        text-align: center;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 60px;
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn {
+        padding: 15px 35px;
+        margin-top: 25px;
+        font-size: 18px;
+        cursor: pointer;
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border: none;
+        border-radius: 30px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+
+      .btn:hover {
+        background: linear-gradient(45deg, #0056b3, #003f7f);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      }
+
+      .btn i {
+        margin-right: 10px;
+      }
+    </style>
+
+    <!-- Font Awesome for icon (optional but improves look) -->
+    <script
+      src="https://kit.fontawesome.com/a076d05399.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="welcome-box">
+      <h1>Welcome to House Rent Management</h1>
+      <p>Find your perfect rental or manage your properties easily.</p>
+      <button class="btn" onclick="location.href='new.html'">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </button>
+    </div>
+  </body>
+</html>
